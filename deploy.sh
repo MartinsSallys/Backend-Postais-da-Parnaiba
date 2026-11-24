@@ -146,7 +146,9 @@ $COMPOSE --profile prod up -d --build
 
 # --- Auto-renewal cron -------------------------------------------------------
 cron_cmd="cd ${APP_DIR} && docker compose --profile cert run --rm certbot renew --webroot -w /var/www/certbot >/dev/null 2>&1 && docker compose restart prod-nginx >/dev/null 2>&1"
-if ! crontab -l 2>/dev/null | grep -q "certbot renew"; then
+if ! command -v crontab >/dev/null 2>&1; then
+    warn "crontab nao encontrado. Configure a renovacao do SSL manualmente com: make ssl-renew"
+elif ! crontab -l 2>/dev/null | grep -q "certbot renew"; then
     (crontab -l 2>/dev/null; echo "0 3 * * * ${cron_cmd}") | crontab -
     info "Renovacao automatica do SSL agendada (diariamente as 3h)."
 fi
