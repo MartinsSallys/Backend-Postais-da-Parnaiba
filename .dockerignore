@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist
+build
+.pytest_cache
+.ruff_cache
+.mypy_cache
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Tests
+tests/
+pytest.ini
+
+# Docs
+README.md
+LICENSE
+
+# Scripts (not needed in container)
+scripts/
+certbot/
+frontend-integration.js
+
+# Static uploads (mounted as volume, not baked in)
+static/uploads/*
+!static/uploads/.gitkeep
