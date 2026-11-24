@@ -133,8 +133,8 @@ o nginx o serve como arquivos estáticos.
 ```bash
 # 1. Clone os dois repositórios como diretórios irmãos
 mkdir -p /opt/postais && cd /opt/postais
-git clone <URL_DO_BACKEND> Backend-Postais_da_Parnaiba
-git clone <URL_DO_FRONTEND> Postais-da-Parnaiba
+git clone https://github.com/MartinsSallys/Backend-Postais-da-Parnaiba.git Backend-Postais_da_Parnaiba
+git clone https://github.com/MartinsSallys/Postais-da-Parnaiba.git Postais-da-Parnaiba
 
 # 2. Entre no backend e rode o deploy
 cd Backend-Postais_da_Parnaiba
