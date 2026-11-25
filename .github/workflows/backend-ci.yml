@@ -1,0 +1,40 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: poetry
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+
+      - name: Lint (ruff)
+        run: poetry run ruff check .
+
+      - name: Run tests
+        run: poetry run pytest -q
+
+      - name: Validate migrations on a scratch database
+        env:
+          DATABASE_URL: sqlite:////tmp/migration-check.db
+          SECRET_KEY: ci-scratch-secret-key
+          DEBUG: "true"
+        run: |
+          poetry run alembic upgrade head
+          poetry run alembic check
