@@ -13,6 +13,7 @@ from app.schemas.timeline_event import (
     TimelineEventResponse,
     TimelineEventUpdate,
 )
+from app.services.media import delete_media_by_url
 
 router = APIRouter(prefix="/timeline-events", tags=["Timeline Events"])
 
@@ -88,11 +89,17 @@ def update_event(
         )
 
     update_data = data.model_dump(exclude_unset=True)
+    old_image_url = event.imagem_url
+
     for key, value in update_data.items():
         setattr(event, key, value)
 
     db.commit()
     db.refresh(event)
+
+    if "imagem_url" in update_data and update_data["imagem_url"] != old_image_url:
+        delete_media_by_url(db, old_image_url)
+
     return event
 
 
@@ -108,5 +115,7 @@ def delete_event(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Evento não encontrado",
         )
+    image_url = event.imagem_url
     db.delete(event)
     db.commit()
+    delete_media_by_url(db, image_url)

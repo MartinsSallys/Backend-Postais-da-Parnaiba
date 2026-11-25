@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     # --- Application
     project_name: str = "Postais da Parnaiba API"
+    environment: str = "development"  # development | production
     debug: bool = False
 
     # --- Database
@@ -25,6 +26,12 @@ class Settings(BaseSettings):
     upload_dir: str = "static/uploads"
     public_upload_prefix: str = "/static/uploads"
     upload_max_size: int = 10 * 1024 * 1024  # 10MB
+
+    # --- Cloudinary (persistent image storage; optional in dev)
+    cloudinary_cloud_name: str = ""
+    cloudinary_api_key: str = ""
+    cloudinary_api_secret: str = ""
+    cloudinary_folder: str = "postais-da-parnaiba"
 
     # --- CORS
     cors_origins: list[str] = [
@@ -43,12 +50,24 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    @property
+    def is_production(self) -> bool:
+        return self.environment.lower() == "production"
+
+    @property
+    def cloudinary_enabled(self) -> bool:
+        return all(
+            [
+                self.cloudinary_cloud_name,
+                self.cloudinary_api_key,
+                self.cloudinary_api_secret,
+            ]
+        )
+
     def model_post_init(self, __context: object) -> None:
         """Validate critical settings after initialization."""
         if not self.secret_key:
-            # In production, SECRET_KEY must be set explicitly
-            # In development, generate a random one with a warning
-            if self.debug:
+            if self.debug and not self.is_production:
                 self.secret_key = secrets.token_hex(32)
                 print(
                     "⚠  WARNING: No SECRET_KEY set. Generated a random key. "
@@ -63,6 +82,14 @@ class Settings(BaseSettings):
                     file=sys.stderr,
                 )
                 sys.exit(1)
+
+        if self.is_production and not self.cloudinary_enabled:
+            print(
+                "⚠  WARNING: Cloudinary credentials not set. "
+                "Image uploads will be stored on the local filesystem, "
+                "which is ephemeral on most hosting providers.",
+                file=sys.stderr,
+            )
 
 
 settings = Settings()
