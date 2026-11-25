@@ -33,6 +33,9 @@ jobs:
         run: poetry run ruff check .
 
       - name: Run tests
+        env:
+          SECRET_KEY: ci-test-secret-key
+          DEBUG: "true"
         run: poetry run pytest -q
 
       - name: Validate migrations on a scratch database
