@@ -12,6 +12,7 @@ from app.models.post import ContentStatus, Post, PostCategory
 from app.routers.deps import get_current_admin
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.post import PostCreate, PostResponse, PostUpdate
+from app.services.media import delete_media_by_url
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -61,9 +62,7 @@ def list_posts(
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=100)] = 10,
     categoria: PostCategory | None = None,
-    status_filter: Annotated[
-        ContentStatus | None, Query(alias="status")
-    ] = None,
+    status_filter: Annotated[ContentStatus | None, Query(alias="status")] = None,
     publicados_only: Annotated[bool, Query()] = False,
 ):
     query = db.query(Post)
@@ -131,6 +130,7 @@ def update_post(
         )
 
     data = payload.model_dump(exclude_unset=True)
+    old_cover_url = post.imagem_capa_url
 
     if "status" in data:
         new_status = data["status"]
@@ -149,6 +149,10 @@ def update_post(
     post.atualizado_em = datetime.now(UTC)
     db.commit()
     db.refresh(post)
+
+    if "imagem_capa_url" in data and data["imagem_capa_url"] != old_cover_url:
+        delete_media_by_url(db, old_cover_url)
+
     return post
 
 
@@ -164,5 +168,7 @@ def delete_post(
             status_code=status.HTTP_404_NOT_FOUND, detail="Post nao encontrado"
         )
 
+    cover_url = post.imagem_capa_url
     db.delete(post)
     db.commit()
+    delete_media_by_url(db, cover_url)

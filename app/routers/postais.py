@@ -9,6 +9,7 @@ from app.models.postal import Postal
 from app.routers.deps import get_current_admin
 from app.schemas.pagination import PaginatedResponse
 from app.schemas.postal import PostalCreate, PostalResponse, PostalUpdate
+from app.services.media import delete_media_by_url
 
 router = APIRouter(prefix="/postais", tags=["Postais"])
 
@@ -61,11 +62,18 @@ def update_postal(
             status_code=status.HTTP_404_NOT_FOUND, detail="Postal nao encontrado"
         )
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    old_image_url = postal.imagem_url
+    data = payload.model_dump(exclude_unset=True)
+
+    for field, value in data.items():
         setattr(postal, field, value)
 
     db.commit()
     db.refresh(postal)
+
+    if "imagem_url" in data and data["imagem_url"] != old_image_url:
+        delete_media_by_url(db, old_image_url)
+
     return postal
 
 
@@ -81,5 +89,7 @@ def delete_postal(
             status_code=status.HTTP_404_NOT_FOUND, detail="Postal nao encontrado"
         )
 
+    image_url = postal.imagem_url
     db.delete(postal)
     db.commit()
+    delete_media_by_url(db, image_url)
